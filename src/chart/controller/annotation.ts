@@ -73,7 +73,7 @@ export default class Annotation extends Controller<BaseOption[]> {
     return 'annotation';
   }
 
-  public init() {}
+  public init() { }
 
   /**
    * 因为 annotation 需要依赖坐标系信息，所以 render 阶段为空方法，实际的创建逻辑都在 layout 中
@@ -83,7 +83,7 @@ export default class Annotation extends Controller<BaseOption[]> {
   }
 
   // 因为 Annotation 不参与布局，但是渲染的位置依赖于坐标系，所以可以将绘制阶段延迟到 layout() 进行
-  public render() {}
+  public render() { }
 
   /**
    * 更新
@@ -175,16 +175,20 @@ export default class Annotation extends Controller<BaseOption[]> {
    * @param doWhat
    */
   private onAfterRender(doWhat: () => void) {
+    let done = false;
     if (this.view.getOptions().animate) {
       this.view.geometries.forEach((g: Geometry) => {
         // 如果 geometry 开启，则监听
         if (g.animateOption) {
           g.once(GEOMETRY_LIFE_CIRCLE.AFTER_DRAW_ANIMATE, () => {
-            doWhat();
+          doWhat();
           });
+          done = true;
         }
       });
-    } else {
+    }
+
+    if (!done) {
       this.view.getRootView().once(VIEW_LIFE_CIRCLE.AFTER_RENDER, () => {
         doWhat();
       });
@@ -198,6 +202,10 @@ export default class Annotation extends Controller<BaseOption[]> {
     if (Ctor) {
       const theme = this.getAnnotationTheme(type);
       const cfg = this.getAnnotationCfg(type, option, theme);
+      // 不创建
+      if (!cfg) {
+        return null;
+      }
       const annotation = new Ctor(cfg);
 
       return {
@@ -391,6 +399,10 @@ export default class Annotation extends Controller<BaseOption[]> {
       }
     }
 
+    if (isNaN(x) || isNaN(y)) {
+      return null;
+    }
+
     return this.view.getCoordinate().convert({ x, y });
   }
 
@@ -480,7 +492,7 @@ export default class Annotation extends Controller<BaseOption[]> {
    * @param option 用户的配置
    * @param theme
    */
-  private getAnnotationCfg(type: string, option: any, theme: object): object {
+  private getAnnotationCfg(type: string, option: any, theme: object): object | null {
     const coordinate = this.view.getCoordinate();
     const canvas = this.view.getCanvas();
     let o = {};
@@ -488,11 +500,18 @@ export default class Annotation extends Controller<BaseOption[]> {
     if (isNil(option)) {
       return null;
     }
+    const { start, end, position } = option;
+    const sp = this.parsePosition(start);
+    const ep = this.parsePosition(end);
+    const textPoint = this.parsePosition(position);
+    if (['arc', 'image', 'line', 'region', 'regionFilter'].includes(type) && (!sp || !ep)) {
+      return null;
+    } else if (['text', 'dataMarker', 'html'].includes(type) && !textPoint) {
+      return null;
+    }
 
     if (type === 'arc') {
       const { start, end, ...rest } = option as ArcOption;
-      const sp = this.parsePosition(start);
-      const ep = this.parsePosition(end);
       const startAngle = getAngleByPoint(coordinate, sp);
       let endAngle = getAngleByPoint(coordinate, ep);
       if (startAngle > endAngle) {
@@ -510,24 +529,24 @@ export default class Annotation extends Controller<BaseOption[]> {
       const { start, end, ...rest } = option as ImageOption;
       o = {
         ...rest,
-        start: this.parsePosition(start),
-        end: this.parsePosition(end),
+        start: sp,
+        end: ep,
         src: option.src,
       };
     } else if (type === 'line') {
       const { start, end, ...rest } = option as LineOption;
       o = {
         ...rest,
-        start: this.parsePosition(start),
-        end: this.parsePosition(end),
+        start: sp,
+        end: ep,
         text: get(option, 'text', null),
       };
     } else if (type === 'region') {
       const { start, end, ...rest } = option as RegionPositionBaseOption;
       o = {
         ...rest,
-        start: this.parsePosition(start),
-        end: this.parsePosition(end),
+        start: sp,
+        end: ep,
       };
     } else if (type === 'text') {
       const filteredData = this.view.getData();
@@ -537,7 +556,7 @@ export default class Annotation extends Controller<BaseOption[]> {
         textContent = content(filteredData);
       }
       o = {
-        ...this.parsePosition(position),
+        ...textPoint,
         ...rest,
         content: textContent,
       };
@@ -545,7 +564,7 @@ export default class Annotation extends Controller<BaseOption[]> {
       const { position, point, line, text, autoAdjust, direction, ...rest } = option as DataMarkerOption;
       o = {
         ...rest,
-        ...this.parsePosition(position),
+        ...textPoint,
         coordinateBBox: this.getCoordinateBBox(),
         point,
         line,
@@ -593,8 +612,8 @@ export default class Annotation extends Controller<BaseOption[]> {
         ...rest,
         color,
         shapes,
-        start: this.parsePosition(start),
-        end: this.parsePosition(end),
+        start: sp,
+        end: ep,
       };
     } else if (type === 'shape') {
       const { render, ...restOptions } = option as ShapeAnnotationOption;
@@ -617,7 +636,7 @@ export default class Annotation extends Controller<BaseOption[]> {
       };
       o = {
         ...restOptions,
-        ...this.parsePosition(position),
+        ...textPoint,
         // html 组件需要指定 parent
         parent: canvas.get('el').parentNode,
         html: wrappedHtml,
@@ -679,8 +698,10 @@ export default class Annotation extends Controller<BaseOption[]> {
       const cfg = this.getAnnotationCfg(type, option, theme);
 
       // 忽略掉一些配置
-      omit(cfg, ['container']);
-      co.component.update(cfg);
+      if (cfg) {
+        omit(cfg, ['container']);
+      }
+      co.component.update({ ...(cfg || {}), visible: !!cfg });
       // 对于 regionFilter/shape，因为生命周期的原因，需要额外 render
       if (includes(ANNOTATIONS_AFTER_RENDER, option.type)) {
         co.component.render();

@@ -1035,9 +1035,13 @@ export class View extends Base {
    * 获取 view 中的所有 geome
    */
   public getElements(): Element[] {
-    return reduce(this.geometries, (elements: Element[], geometry: Geometry) => {
-      return elements.concat(geometry.getElements());
-    }, []);
+    return reduce(
+      this.geometries,
+      (elements: Element[], geometry: Geometry) => {
+        return elements.concat(geometry.getElements());
+      },
+      []
+    );
   }
 
   /**
@@ -1055,7 +1059,7 @@ export class View extends Base {
    * @returns
    */
   public getElementsBy(condition: (element: Element) => boolean): Element[] {
-    return this.getElements().filter(el => condition(el));
+    return this.getElements().filter((el) => condition(el));
   }
 
   /**
@@ -1086,7 +1090,7 @@ export class View extends Base {
    * @returns 维度字段的 Attribute 数组
    */
   public getLegendAttributes(): Attribute[] {
-    return (flatten(this.geometries.map((g: Geometry) => g.getGroupAttributes())) as unknown) as Attribute[];
+    return flatten(this.geometries.map((g: Geometry) => g.getGroupAttributes())) as unknown as Attribute[];
   }
 
   /**
@@ -1104,7 +1108,7 @@ export class View extends Base {
    * @returns G.Canvas 画布实例。
    */
   public getCanvas(): ICanvas {
-    return ((this.getRootView() as unknown) as Chart).canvas;
+    return (this.getRootView() as unknown as Chart).canvas;
   }
 
   /**
@@ -1422,6 +1426,10 @@ export class View extends Base {
     // 这里必须保留，原因是后面子 view 的 viewBBox 或根据 parent 的 coordinateBBox
     this.coordinateBBox = this.viewBBox.shrink(this.autoPadding.getPadding());
     this.adjustCoordinate();
+
+    // 刷新 tooltip (tooltip crosshairs 依赖 coordinate 位置)
+    const tooltipController = this.controllers.find((c) => c.name === 'tooltip');
+    tooltipController.update();
 
     // 同样递归处理子 views
     const views = this.views;
@@ -1970,9 +1978,10 @@ export class View extends Base {
    * @param isUpdate
    */
   private renderComponents(isUpdate: boolean) {
+    const components = this.getComponents();
     // 先全部清空，然后 render
-    for (let i = 0; i < this.getComponents().length; i++) {
-      const co = this.getComponents()[i];
+    for (let i = 0; i < components.length; i++) {
+      const co = components[i];
       (co.component as GroupComponent).render();
     }
   }

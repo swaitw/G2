@@ -1,7 +1,7 @@
 import { deepMix, find, get, isEqual, isFunction, mix, isString, isBoolean, flatten, isArray } from '@antv/util';
 import { Crosshair, HtmlTooltip, IGroup } from '../../dependents';
 import { Point, TooltipItem, TooltipOption } from '../../interface';
-import { getAngleByPoint, getDistanceToCenter, isPointInCoordinate } from '../../util/coordinate';
+import { getAngleByPoint, getDistanceToCenter, getCoordinateClipCfg } from '../../util/coordinate';
 import { polarToCartesian } from '../../util/graphics';
 import { findItemsFromView } from '../../util/tooltip';
 import { BBox } from '../../util/bbox';
@@ -47,14 +47,14 @@ export default class Tooltip extends Controller<TooltipOption> {
     return 'tooltip';
   }
 
-  public init() {}
+  public init() { }
 
   private isVisible() {
     const option = this.view.getOptions().tooltip;
     return option !== false;
   }
 
-  public render() {}
+  public render() { }
 
   /**
    * Shows tooltip
@@ -230,8 +230,8 @@ export default class Tooltip extends Controller<TooltipOption> {
       tooltipMarkersGroup.clear();
     }
 
-    // 如果 customContent 不为空，就重新生成 tooltip 
-    if (tooltip?.get("customContent")) {
+    // 如果 customContent 不为空，就重新生成 tooltip
+    if (tooltip?.get('customContent')) {
       this.tooltip.destroy();
       this.tooltip = null;
     }
@@ -342,7 +342,7 @@ export default class Tooltip extends Controller<TooltipOption> {
     return [];
   }
 
-  public layout() {}
+  public layout() { }
 
   public update() {
     if (this.point) {
@@ -439,13 +439,31 @@ export default class Tooltip extends Controller<TooltipOption> {
 
   private renderTooltipMarkers(items, marker) {
     const tooltipMarkersGroup = this.getTooltipMarkersGroup();
+    const rootView = this.view.getRootView();
+    const { limitInPlot } = rootView;
     for (const item of items) {
       const { x, y } = item;
+
+      // 有裁剪就剪切
+      if (limitInPlot || tooltipMarkersGroup?.getClip()) {
+        const { type, attrs } = getCoordinateClipCfg(rootView.getCoordinate());
+        tooltipMarkersGroup?.setClip({
+          type,
+          attrs,
+        });
+      } else {
+        // 清除已有的 clip
+        tooltipMarkersGroup?.setClip(undefined);
+      }
+
+      const theme = this.view.getTheme();
+      const markerDefaultCfg = get(theme, ['components', 'tooltip', 'marker'], {});
+
       const attrs = {
         fill: item.color,
         symbol: 'circle',
         shadowColor: item.color,
-        ...marker,
+        ...(isFunction(marker) ? { ...markerDefaultCfg, ...marker(item) } : marker),
         x,
         y,
       };
@@ -477,9 +495,6 @@ export default class Tooltip extends Controller<TooltipOption> {
   // 渲染 x 轴上的 tooltip 辅助线
   private renderXCrosshairs(point: Point, tooltipCfg) {
     const coordinate = this.getViewWithGeometry(this.view).getCoordinate();
-    if (!isPointInCoordinate(coordinate, point)) {
-      return;
-    }
     let start;
     let end;
     if (coordinate.isRect) {
@@ -537,9 +552,6 @@ export default class Tooltip extends Controller<TooltipOption> {
   // 渲染 y 轴上的辅助线
   private renderYCrosshairs(point: Point, tooltipCfg) {
     const coordinate = this.getViewWithGeometry(this.view).getCoordinate();
-    if (!isPointInCoordinate(coordinate, point)) {
-      return;
-    }
     let cfg;
     let type;
     if (coordinate.isRect) {

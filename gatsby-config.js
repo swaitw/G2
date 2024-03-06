@@ -14,10 +14,11 @@ module.exports = {
   siteMetadata: {
     title: 'G2',
     description: 'The Grammar of Graphics in JavaScript',
-    siteUrl: 'https://g2.antv.vision',
+    siteUrl: 'https://g2-v4.antv.vision',
     githubUrl: repository.url,
     versions: {
-      '4.x': 'https://g2.antv.vision/',
+      '5.x': 'https://g2.antv.antgroup.com',
+      [version]: 'https://g2-v4.antv.vision',
       '3.x': 'https://g2-v3.antv.vision/',
       '2.x': 'https://antv.vision/old-site/g2/doc/index.html',
     },
@@ -242,7 +243,7 @@ module.exports = {
         icon: 'candlestick',
         title: {
           zh: '烛形图',
-          en: 'K Chart',
+          en: 'Candlestick Chart',
         },
       },
       {
@@ -326,6 +327,10 @@ module.exports = {
             </script>
           </body>
         </html>`,
+    },
+    announcement: {
+      zh: '',
+      en: '',
     },
   },
 };

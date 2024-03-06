@@ -632,6 +632,8 @@ registerInteraction('brush-visible', {
 - swResize() 光标指示可移动的方向左下方（西南）
 - nsResize() 光标指示可以在上下方向移动
 - ewResize() 光标指示可以在左右方向移动
+- zoomIn() 光标显示可以被放大
+- zoomOut() 光标显示可以缩小尺寸
 
 ### Chart/View 的 Action
 
@@ -664,6 +666,30 @@ Chart 和 View 上的 Action 用户控制视图的变化，目前支持的有：
 - zoomIn() 缩小
 - zoomOut() 放大
 - reset() 恢复
+
+#### mousewheel-scroll
+
+- scroll() 鼠标滚轮
+
+```javascript
+chart.interaction("plot-mousewheel-scroll");
+
+chart.option('scrollbar', {
+  type: 'horizontal',
+});
+```
+
+在鼠标滚动事件（向下滚动或向上滚动）上滚动的图表数据项的数量可以通过如下设置 `wheelDelta` 参数来自定义:
+
+```javascript
+chart.interaction("plot-mousewheel-scroll", {
+  start: [{ trigger: 'plot:mousewheel', action: 'mousewheel-scroll:scroll', arg: {  wheelDelta: 5 } }],
+});
+
+chart.option('scrollbar', {
+  type: 'horizontal',
+});
+```
 
 ### Element 的 Action
 
@@ -1000,6 +1026,39 @@ registerInteraction('element-brush', {
 - addPoint() 添加一个点
 - hide() 隐藏遮罩层
 - end() 结束框选
+
+#### rect-multi-mask
+
+在画布上进行框选，支持反复框选，出现多个矩形的遮罩：
+
+- start() 开始框选
+- show() 显示遮罩层
+- resize() 改变大小
+- hide() 隐藏遮罩层
+- end() 结束框选
+- clear() 清除框选
+
+#### circle-multi-mask
+
+在画布上进行框选，支持反复框选，出现多个圆形的遮罩：
+
+- start() 开始框选
+- show() 显示遮罩层
+- resize() 改变大小
+- hide() 隐藏遮罩层
+- end() 结束框选
+- clear() 清除框选
+
+#### path-multi-mask
+
+在画布上进行框选，在多个点上形成 path，支持反复框选，出现多个 path 遮罩：
+
+- start() 开始框选
+- show() 显示遮罩层
+- addPoint() 添加一个点
+- hide() 隐藏遮罩层
+- end() 结束框选
+- clear() 清除框选
 
 #### reset-button
 

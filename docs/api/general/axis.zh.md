@@ -82,7 +82,8 @@ _AxisOption_ 配置如下：
 | spacing    | number              |          | -      | 标题距离坐标轴文本的距离  |
 | text       | string              |          | -      | 设置文本               |
 | autoRotate | boolean             |          | -      | 是否自动旋转             |
-| position   | 'start' \| 'center' \| 'end' |          | -      | 坐标轴名称显示位置 |
+| position   | 'start' \| 'center' \| 'end' |          | -      | 坐标轴标题显示位置 |
+| description| string              |          | -      | 坐标轴标题添加详细说明 |
 
 ### AxisOption.label
 
@@ -118,7 +119,7 @@ _GridLineCfg_ 配置如下：
 | 参数名 | 类型                | 是否必选 | 默认值 | 描述                               |
 | ------ | ------------------- | -------- | ------ | ---------------------------------- |
 | type   | 'line' \| 'circle'  |          | -      | 栅格线的类型，'line' 或者 'circle' |
-| style  | [ShapeAttrs](/zh/docs/api/shape/shape-attrs) |          | -      | 坐标轴刻度线的样式配置项           |
+| style  | [ShapeAttrs](/zh/docs/api/shape/shape-attrs) \| ShapeAttrsCallback |          | -      | 坐标轴刻度线的样式配置项           |
 
 ### AxisOption.animate
 

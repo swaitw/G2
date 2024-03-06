@@ -9,7 +9,7 @@ redirect_from:
 
 G2 的 View 是图层容器的概念，每一个 View 拥有自己独立的数据源、坐标系、几何标记、Tooltip 以及图例，可以理解 View 是整个 G2 体系中，用来组装数据，Component，Geometry 的容器。 一个 View 可以包含有多个子 View，通过这种嵌套关系，可以将一个画布按照不同的布局划分多个不同区域（分面），也可以将不同数据源的多个 View 叠加到一起，形成一个多数据源，多图层的图表。
 
-而 Chart 是继承自 View，用于提供创建 canvas、已经自适应图表大小等能力，便于开发者使用的类。
+而 Chart 是继承自 View，用于提供创建 canvas、以及自适应图表大小等能力，便于开发者使用的类。
 
 下面会介绍如何创建 Chart 对象，以及 Chart 对象体提供一些 API，包括通用 API、生命周期 API 以及 View 管理 API 等。
 
@@ -41,6 +41,20 @@ changeSize(width: number, height: number): Chart;
 
 ```sign
 changeVisible(visible: boolean): Chart;
+```
+
+### chart.aria()
+
+开启或者关闭无障碍标签，`false` 表示关闭，否则需要填入无障碍标签配置内容，默认关闭。
+
+```sign
+aria(false ｜ AriaOptions): void
+```
+
+Example:
+
+```ts
+chart.aria({ label: '这张图表展示的是不同城市的交易额对比情况。' });
 ```
 
 ## View API
@@ -98,10 +112,6 @@ view.filter('city', (value: any, datum: Datum) => value !== '杭州');
 // condition 为空，则表示删除过滤条件
 view.filter('city', null);
 ```
-
-### view.filterData()
-
-将 data 数据进行过滤。
 
 ```sign
 filterData(data: Data): Data;
